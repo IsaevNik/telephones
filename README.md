@@ -10,5 +10,5 @@
 
 3) Run container:
     ```
-    docker run -v $(pwd)/sites.csv:/usr/src/telephones/sites.csv -t telephones:latest -f "sites.csv"
+    docker run --rm -v $(pwd)/sites.csv:/usr/src/telephones/sites.csv -t telephones:latest -f "sites.csv"
     ```
