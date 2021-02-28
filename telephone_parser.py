@@ -29,15 +29,14 @@ def get_result_by_regexp(regexp: re.Pattern, text: str) -> List[str]:
     return [clear_number(i) for i in result]
 
 
-async def get_html(url: str) -> str:
-    async with aiohttp.ClientSession(timeout=REQUEST_TIMEOUT) as session:
-        async with session.get(url, raise_for_status=True) as response:
-            return await response.text()
+async def get_html(url: str, session: aiohttp.ClientSession) -> str:
+    async with session.get(url, raise_for_status=True) as response:
+        return await response.text()
 
 
-async def parse_telephone_number_from_site(url: str) -> (List[str], str):
+async def parse_telephone_number_from_site(url: str, session: aiohttp.ClientSession) -> (List[str], str):
     try:
-        html = await get_html(url)
+        html = await get_html(url, session)
     except (aiohttp.ClientError, asyncio.TimeoutError) as exc:
         logging.error('%s request error %s', url, exc)
         return [], str(exc)
@@ -52,9 +51,10 @@ async def parse_telephone_number_from_site(url: str) -> (List[str], str):
 
 
 async def parse_telephone_numbers(urls: List[str]):
-    results = await asyncio.gather(*[
-        parse_telephone_number_from_site(url) for url in urls
-    ], return_exceptions=True)
+    async with aiohttp.ClientSession(timeout=REQUEST_TIMEOUT) as session:
+        results = await asyncio.gather(*[
+            parse_telephone_number_from_site(url, session) for url in urls
+        ], return_exceptions=True)
     for i, (phones, error) in enumerate(results):
         if error:
             sys.stderr.write('{}: error: {}\n'.format(urls[i], error))
